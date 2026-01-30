@@ -1,6 +1,7 @@
 import { randomInt } from 'crypto';
 import { readFileSync } from 'fs';
 import { Quote } from './Quote.ts';
+import { argv0 } from 'process';
 
 const BOOK_PATH = './resources';
 
@@ -48,7 +49,7 @@ export class Book {
 
     parseBookContent() {
         const parts = this.content
-            .split('.')
+            .split('\n\n')
             .filter((line) => line.trim() !== '')
             .map((part) => part.trim())
             .map((part) => part.replace('\n', ' '))
@@ -91,25 +92,22 @@ export class Book {
         return quote;
     }
 
-    Bucket = {
-        50: ['qutoe', 'quote where quote.length in range (50, 100)'],
-        100: ['quote where quote.length in range (100,150)'],
-    };
-
     parseQuotesBuckets() {
         for (let quote of this.quotes) {
             const length = quote.getLength();
 
             let correctBucketSize = this.quotesBuckets.keys().next().value!;
 
+            // Distribute each quote to its approporiate bucket
             bucketsLoop: for (let bucketSize of this.quotesBuckets.keys()) {
-                console.log('checking bucket size: ', bucketSize, ' for quote length: ', length);
                 if (length <= bucketSize) {
                     break bucketsLoop;
                 }
 
                 correctBucketSize = bucketSize;
             }
+
+            // console.log('Corrent Bucket Size for ', length, ' is ', correctBucketSize);
             this.quotesBuckets.get(correctBucketSize)!.push(quote);
 
             // console.log('Actual Length: ', length);
@@ -119,7 +117,40 @@ export class Book {
     }
 
     public getQuotesInRange(range: number) {
-        console.log(this.quotesBuckets);
-        return this.quotesBuckets.get(range);
+
+
+        const bucketSize = this.findCorrectBucketSize(range);
+
+        console.log(`Got Correct Bucket ${bucketSize} for range ${range}`)
+
+
+        return this.quotesBuckets.get(bucketSize);
+    }
+
+    private findCorrectBucketSize(range: number) {
+        // Binary Search ? Am I Dreaming !! 
+        const bucketSizes = this.quotesBuckets.keys().toArray();
+        // [100 , 200 , 300 , 400, 500 , 600 , 700]
+
+        let l = 0;
+        let r = bucketSizes.length;
+
+        while (l < r) {
+            let mid = Math.floor((l + r) / 2)
+
+            let value = bucketSizes[mid]!
+
+            if (value! < range) {
+                l = mid + 1;
+            } else if (value! > range) {
+                r = mid - 1;
+            } else {
+                return value;
+            }
+        }
+
+        return bucketSizes[r - 1]!;
     }
 }
+
+
