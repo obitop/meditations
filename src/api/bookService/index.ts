@@ -1,63 +1,77 @@
 import { randomInt } from 'node:crypto';
-import { Book } from './Book';
+import { Book } from './Book.ts';
 
 export class BookService {
-	private books = new Map<number, Book>();
+    private books = new Map<number, Book>();
 
-	constructor() {
-		for (let i = 1; i < 13; i++) {
-			const book = new Book(i);
+    private shortBuckets = new Map<number, Array<{ part: number; quote: string }>>();
 
-			book.parseBookContent();
+    constructor() {
+        for (let i = 1; i < 13; i++) {
+            const book = new Book(i);
 
-			this.books.set(i, book);
-		}
-	}
+            book.parseBookContent();
+            book.parseQuotesBuckets();
 
-	public getBooks() {
-		return this.books;
-	}
+            this.books.set(i, book);
+        }
+    }
 
-	public getRandomQuote() {
-		const bookPart = randomInt(1, 13);
+    public getBooks() {
+        return this.books;
+    }
 
-		const book = this.books.get(bookPart);
-		if (!book) {
-			throw new Error(`Book ${bookPart} not found`);
-		}
+    public getRandomQuote() {
+        const bookPart = randomInt(1, 13);
 
-		const quotes = book.getQuotes();
+        const book = this.books.get(bookPart);
+        if (!book) {
+            throw new Error(`Book ${bookPart} not found`);
+        }
 
-		const length = quotes.length;
+        const quote = book.getRandomQuote();
 
-		const quoteIndex = randomInt(length);
+        return quote
+    }
 
-		const quote = quotes[quoteIndex];
+    public getRandomQuoteFromPart(part: number) {
+        const book = this.books.get(part);
 
-		if (!quote) {
-			throw new Error(`Quote with index ${quoteIndex} not found`);
-		}
+        if (!book) {
+            throw new Error(`Book ${part} not found`);
+        }
 
-		return { part: bookPart, quote };
-	}
+        const quote = book.getRandomQuote();
 
-	public getRandomQuoteFromPart(part: number) {
-		const book = this.books.get(part);
+        return quote;
 
-		if (!book) {
-			throw new Error(`Book ${part} not found`);
-		}
+    }
 
-		const quotes = book.getQuotes();
+    public getRandomQuoteInRange(length: number) {
+        const bookPart = randomInt(1, 13);
 
-		const quoteIndex = randomInt(quotes.length);
+        const book = this.books.get(bookPart);
 
-		const quote = quotes[quoteIndex];
+        if (!book) {
+            throw new Error(`Book ${bookPart} not found`);
+        }
 
-		if (!quote) {
-			throw new Error(`Quote with index ${quoteIndex} not found`);
-		}
+        const quotesInRange = book.getQuotesInRange(length);
 
-		return { part, quote };
-	}
+        if (!quotesInRange || quotesInRange.length === 0) {
+            throw new Error(`No quotes found in Range ${length} in Book ${bookPart}`);
+        }
+
+        const quoteIndex = randomInt(quotesInRange?.length || 0);
+
+        const quote = quotesInRange[quoteIndex];
+
+        if (!quote) {
+            throw new Error(`Quote with index ${quoteIndex} not found in Range ${length} in Book ${bookPart}`);
+        }
+
+        return quote;
+    }
+
 }
+

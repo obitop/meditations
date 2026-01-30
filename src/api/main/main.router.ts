@@ -18,3 +18,11 @@ mainRouter.get('/random/:part', (req: Request, res: Response) => {
 
     return res.status(200).json({ ...quote });
 });
+
+mainRouter.get('/short/:length', async (req: Request, res: Response) => {
+    const length = Number(req.params.length);
+
+    const quote = bookService.getRandomQuoteInRange(length);
+
+    return res.status(200).json({ ...quote });
+})
